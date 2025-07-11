@@ -40,7 +40,7 @@ log "Starting aggressive force merge process..."
 # Get all repos
 get_all_repos() {
     gh repo list "$GITHUB_USERNAME" --limit 1000 --json name,url,defaultBranchRef | \
-    jq -r '.[] | "\(.name)|\(.url)|\((.defaultBranchRef.name))"'
+    jq -r '.[] | "\(.name)|\(.url)|\(.defaultBranchRef.name)"'
 }
 
 # Force merge all PRs in a repo
