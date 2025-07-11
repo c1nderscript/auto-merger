@@ -5,6 +5,7 @@
 ### 1. Log File Size Monitoring - HIGH PRIORITY ⚠️
 
 **Issue**: The force-merge job frequency has been increased by 10× (from previous schedule).
+It now runs every minute, which causes logs to grow much faster than before.
 
 **Critical Path**: `/var/log/force-merge.log`
 

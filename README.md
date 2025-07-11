@@ -69,9 +69,9 @@
    crontab -e
    ```
    
-   Add this line to run every 5 minutes:
+   Add this line to run every minute:
    ```
-   */5 * * * * /opt/scripts/auto-merge-wrapper.sh >> /var/log/auto-merge-cron.log 2>&1
+   * * * * * /opt/scripts/auto-merge-wrapper.sh >> /var/log/auto-merge-cron.log 2>&1
    ```
 
 ## GitHub Personal Access Token
