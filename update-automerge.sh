@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Auto-merge Update Script
 # Pulls latest changes from auto-merger repo and resets the cronjob
