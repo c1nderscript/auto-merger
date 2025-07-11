@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # AGGRESSIVE FORCE MERGE SCRIPT WITH GITHUB APP AUTHENTICATION
 # Performs 3 actions every minute: merge PR, force conflict merge, delete stale branch

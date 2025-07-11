@@ -40,6 +40,8 @@
    ```bash
    export GITHUB_TOKEN="your_github_personal_access_token_here"
    export GITHUB_USERNAME="your_github_username"
+   # Optional: used by aggro.sh when GitHub App auth fails
+   export GITHUB_TOKEN_FALLBACK="fallback_token"
    ```
 
 3. **Validate your environment:**
@@ -151,6 +153,9 @@ To modify the merge behavior:
 Use `aggro.sh` when you need to aggressively merge branches without the usual
 safety checks. This script is intended for experimental workflows and will merge
 branches even when conflicts or failing checks exist.
+
+If GitHub App authentication fails, `aggro.sh` falls back to the token defined in
+`GITHUB_TOKEN_FALLBACK`.
 
 ```bash
 source /opt/scripts/auto-merge.env

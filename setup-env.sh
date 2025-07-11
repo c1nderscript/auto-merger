@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Setup script for environment variables
 # This script sets up the required environment variables for the auto-merge system
@@ -28,6 +29,6 @@ echo "  GITHUB_TOKEN: [REDACTED]"
 
 # Run the command passed as arguments
 if [ $# -gt 0 ]; then
-    echo "Executing: $@"
+    echo "Executing: $*"
     exec "$@"
 fi

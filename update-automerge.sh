@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Auto-merge Update Script
 # Pulls latest changes from auto-merger repo and resets the cronjob
@@ -22,9 +23,7 @@ cd "$REPO_DIR" || {
 
 # Pull latest changes
 log "Pulling latest changes from auto-merger repository..."
-git pull origin main 2>&1 | tee -a "$LOG_FILE"
-
-if [ $? -eq 0 ]; then
+if git pull origin main 2>&1 | tee -a "$LOG_FILE"; then
     log "Successfully pulled latest changes"
 else
     log "WARNING: Git pull failed, continuing with existing version"
@@ -40,12 +39,10 @@ crontab -l > /tmp/crontab_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null
 crontab -l 2>/dev/null | grep -v "aggro.sh" > /tmp/new_crontab_temp
 
 # Add the updated automerge cronjob (every minute)
-echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
+printf '%s\n' "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
 
 # Install the new crontab
-crontab /tmp/new_crontab_temp
-
-if [ $? -eq 0 ]; then
+if crontab /tmp/new_crontab_temp; then
     log "Successfully updated crontab with latest automerge configuration"
 else
     log "ERROR: Failed to update crontab"
