@@ -129,6 +129,30 @@ df -h /var/log
 sudo gzip /var/log/force-merge.log.old
 ```
 
+### Log Rotation Setup
+
+Create `/etc/logrotate.d/force-merge` to keep the log file size under control:
+
+```
+/var/log/force-merge.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        # Signal process to reopen log file if needed
+    endscript
+}
+```
+
+Test the configuration manually:
+
+```bash
+sudo logrotate --force /etc/logrotate.d/force-merge
+```
+
 ## Safety Features
 
 The script includes several safety measures:
