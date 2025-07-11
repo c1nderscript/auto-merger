@@ -10,6 +10,20 @@ LOG_FILE="/tmp/auto-merge.log"
 REPO_DIR="/tmp/auto-merge-repos"
 MAX_RETRIES=3
 
+# Generic retry helper
+retry() {
+    local attempt=1
+    until "$@"; do
+        if [ "$attempt" -ge "$MAX_RETRIES" ]; then
+            log "Command failed after $MAX_RETRIES attempts: $*"
+            return 1
+        fi
+        log "Retrying ($attempt/$MAX_RETRIES)..."
+        attempt=$((attempt + 1))
+        sleep 2
+    done
+}
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -119,8 +133,8 @@ merge_pull_request() {
         return 1
     fi
     
-    # Try to merge
-    if gh pr merge "$pr_number" --auto --squash; then
+    # Try to merge with retries
+    if retry gh pr merge "$pr_number" --auto --squash; then
         log "✅ Successfully merged PR #$pr_number in $repo_name"
     else
         log "❌ Failed to merge PR #$pr_number in $repo_name"
@@ -189,7 +203,7 @@ merge_branch() {
     git reset --hard "origin/$target"
     
     if git merge --no-ff "origin/$branch"; then
-        if git push origin "$target"; then
+        if retry git push origin "$target"; then
             log "✅ Successfully merged branch $branch into $target in $repo_name"
             # Optionally delete the merged branch
             # git push origin --delete "$branch"
