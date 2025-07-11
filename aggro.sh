@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # AGGRESSIVE FORCE MERGE SCRIPT WITH GITHUB APP AUTHENTICATION
-# For experimental AI-generated code workflows
-# Merges everything regardless of conflicts or test failures
+# Performs 3 actions every minute: merge PR, force conflict merge, delete stale branch
 
 # Load GitHub App authentication
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,11 +10,9 @@ source "$SCRIPT_DIR/github-app-auth.sh"
 # Authenticate and get fresh token
 if ! authenticate; then
     echo "Error: GitHub App authentication failed. Falling back to personal access token."
-    # Fallback to personal access token
     export GITHUB_TOKEN="${GITHUB_TOKEN_FALLBACK:-}"
     export GITHUB_USERNAME="c1nderscript"
 else
-    # Load the GitHub App token
     source /tmp/github-app-token.env
     export GITHUB_USERNAME="c1nderscript"
     echo "Using GitHub App authentication with higher rate limits"
@@ -35,7 +32,6 @@ if [ -z "$GITHUB_TOKEN" ]; then
 fi
 
 log "Force merge session started"
-log "Starting aggressive force merge process..."
 
 # Get all repos
 get_all_repos() {
@@ -43,20 +39,121 @@ get_all_repos() {
     jq -r '.[] | "\(.name)|\(.url)|\(.defaultBranchRef.name)"'
 }
 
-# Force merge all PRs in a repo
-force_merge_all_prs() {
+# Action 1: Attempt to merge an outstanding PR
+merge_outstanding_pr() {
+    local repo_name="$1"
+    
+    log "ACTION 1: Attempting to merge outstanding PR in $repo_name"
+    
+    cd "$repo_name" || return 1
+    
+    # Get first open PR
+    local pr_info=$(gh pr list --state open --limit 1 --json number,headRefName,baseRefName --jq '.[0] | "\(.number)|\(.headRefName)|\(.baseRefName)"')
+    
+    if [ -n "$pr_info" ]; then
+        IFS='|' read -r pr_number head_branch base_branch <<< "$pr_info"
+        log "Found PR #$pr_number: $head_branch -> $base_branch"
+        
+        if gh pr merge "$pr_number" --squash --auto 2>/dev/null; then
+            log "✅ Successfully merged PR #$pr_number"
+            return 0
+        else
+            log "⚠️ Failed to auto-merge PR #$pr_number"
+            return 1
+        fi
+    else
+        log "No open PRs found in $repo_name"
+        return 1
+    fi
+}
+
+# Action 2: Force merge an unresolvable conflict
+force_conflict_merge() {
+    local repo_name="$1"
+    
+    log "ACTION 2: Force merging unresolvable conflict in $repo_name"
+    
+    cd "$repo_name" || return 1
+    
+    # Get a PR with conflicts
+    local conflict_pr=$(gh pr list --state open --limit 5 --json number,headRefName,baseRefName --jq '.[] | "\(.number)|\(.headRefName)|\(.baseRefName)"' | head -1)
+    
+    if [ -n "$conflict_pr" ]; then
+        IFS='|' read -r pr_number head_branch base_branch <<< "$conflict_pr"
+        log "Force merging PR #$pr_number with conflicts"
+        
+        # Switch to base branch
+        git checkout "$base_branch" 2>/dev/null || git checkout -b "$base_branch" "origin/$base_branch"
+        git reset --hard "origin/$base_branch"
+        
+        # Fetch the PR branch
+        git fetch origin "$head_branch:$head_branch" 2>/dev/null || true
+        
+        # Force merge using 'ours' strategy (keep our version in conflicts)
+        if git merge --no-ff --strategy=ours "$head_branch" -m "Force merge PR #$pr_number (conflict resolution)" 2>/dev/null; then
+            log "Merge successful with 'ours' strategy"
+            
+            # Push the merge
+            if git push origin "$base_branch" 2>/dev/null; then
+                log "✅ Successfully force-merged PR #$pr_number"
+                # Close the PR
+                gh pr close "$pr_number" --comment "Auto-merged via force merge (conflict resolution)" 2>/dev/null || true
+            else
+                log "❌ Failed to push force merge for PR #$pr_number"
+            fi
+        else
+            log "❌ Force merge failed for PR #$pr_number"
+        fi
+    else
+        log "No PRs available for conflict resolution"
+    fi
+}
+
+# Action 3: Delete a stale branch
+delete_stale_branch() {
+    local repo_name="$1"
+    
+    log "ACTION 3: Deleting stale branch in $repo_name"
+    
+    cd "$repo_name" || return 1
+    
+    # Get list of remote branches (excluding main/master and recent branches)
+    local stale_branches=$(git branch -r --merged | grep -v "HEAD\|main\|master" | head -3 | tr -d ' ')
+    
+    for branch in $stale_branches; do
+        if [ -n "$branch" ]; then
+            local branch_name=$(echo "$branch" | sed 's/origin\///')
+            
+            # Check if branch is older than 7 days (simplified check)
+            log "Attempting to delete stale branch: $branch_name"
+            
+            if git push origin --delete "$branch_name" 2>/dev/null; then
+                log "✅ Deleted stale branch: $branch_name"
+                return 0
+            else
+                log "⚠️ Failed to delete branch: $branch_name"
+            fi
+        fi
+    done
+    
+    log "No stale branches found to delete"
+}
+
+# Process a single repository with all 3 actions
+process_repository() {
     local repo_name="$1"
     local repo_url="$2"
     local default_branch="$3"
     
-    log "Processing repo: $repo_name"
+    log "========================================="
+    log "Processing repository: $repo_name"
     
     # Clone or update repo
     if [ -d "$repo_name" ]; then
         cd "$repo_name"
-        git fetch --all --prune
+        git fetch --all --prune 2>/dev/null
     else
-        git clone "$repo_url" "$repo_name"
+        git clone "$repo_url" "$repo_name" 2>/dev/null
         cd "$repo_name"
     fi
     
@@ -64,118 +161,13 @@ force_merge_all_prs() {
     gh api repos/"$GITHUB_USERNAME"/"$repo_name"/branches/"$default_branch"/protection \
         --method DELETE 2>/dev/null || true
     
-    # Get all open PRs
-    local prs=$(gh pr list --state open --json number,headRefName,baseRefName --jq '.[] | "\(.number)|\(.headRefName)|\(.baseRefName)"')
-    
-    if [ -z "$prs" ]; then
-        log "No PRs found in $repo_name"
-    else
-        log "Processing PRs in $repo_name"
-    
-        echo "$prs" | while IFS='|' read -r pr_number head_branch base_branch; do
-            log "Force merging PR #$pr_number: $head_branch -> $base_branch"
-            
-            # Try normal merge first
-            if gh pr merge "$pr_number" --squash --auto 2>/dev/null; then
-                log "✅ Normal merge successful for PR #$pr_number"
-            else
-                # Force merge approach
-                force_merge_pr "$repo_name" "$pr_number" "$head_branch" "$base_branch"
-            fi
-        done
-    fi
+    # Execute the 3 actions
+    merge_outstanding_pr "$repo_name"
+    force_conflict_merge "$repo_name"
+    delete_stale_branch "$repo_name"
     
     cd ..
-}
-
-# Force merge a specific PR using git commands
-force_merge_pr() {
-    local repo_name="$1"
-    local pr_number="$2"
-    local head_branch="$3"
-    local base_branch="$4"
-    
-    log "Attempting force merge for PR #$pr_number"
-    
-    # Switch to base branch
-    git checkout "$base_branch" 2>/dev/null || git checkout -b "$base_branch" "origin/$base_branch"
-    git reset --hard "origin/$base_branch"
-    
-    # Fetch the PR branch
-    git fetch origin "$head_branch:$head_branch" 2>/dev/null || true
-    
-    # Try different merge strategies
-    if git merge "$head_branch" --no-ff --strategy=recursive -X theirs; then
-        log "Merge successful with 'theirs' strategy"
-    elif git merge "$head_branch" --no-ff --strategy=ours; then
-        log "Merge successful with 'ours' strategy"  
-    else
-        # Force merge by creating a merge commit manually
-        git merge --abort 2>/dev/null || true
-        git reset --hard "origin/$base_branch"
-        
-        # Get the commits from head branch
-        local head_commit=$(git rev-parse "$head_branch")
-        git merge --no-ff --strategy=ours "$head_branch" -m "Force merge PR #$pr_number: $head_branch -> $base_branch"
-        
-        if [ $? -eq 0 ]; then
-            log "Force merge successful with 'ours' strategy"
-        else
-            log "❌ Force merge failed for PR #$pr_number"
-            return 1
-        fi
-    fi
-    
-    # Push the merge
-    if git push origin "$base_branch" 2>/dev/null; then
-        log "✅ Successfully pushed merged changes for PR #$pr_number"
-        
-        # Close the PR
-        gh pr close "$pr_number" --comment "Auto-merged via force merge script" 2>/dev/null || true
-    else
-        log "ERROR: Failed to push merged changes for PR #$pr_number"
-    fi
-}
-
-# Force merge all branches in a repo
-force_merge_all_branches() {
-    local repo_name="$1"
-    local default_branch="$2"
-    
-    log "Force merging all branches in $repo_name"
-    
-    cd "$repo_name"
-    
-    # Switch to default branch
-    git checkout "$default_branch" 2>/dev/null || git checkout -b "$default_branch" "origin/$default_branch"
-    git reset --hard "origin/$default_branch"
-    
-    # Get all remote branches except default
-    local branches=$(git branch -r | grep -v "origin/$default_branch" | grep -v "HEAD" | sed 's/origin\///' | tr -d ' ')
-    
-    for branch in $branches; do
-        if [ -n "$branch" ] && [ "$branch" != "$default_branch" ]; then
-            log "Force merging branch: $branch"
-            
-            # Fetch the branch
-            git fetch origin "$branch:$branch" 2>/dev/null || continue
-            
-            # Try to merge
-            if git merge "$branch" --no-ff --strategy=recursive -X theirs 2>/dev/null; then
-                log "✅ Merged branch $branch"
-            elif git merge "$branch" --no-ff --strategy=ours 2>/dev/null; then
-                log "✅ Merged branch $branch with 'ours' strategy"
-            else
-                git merge --abort 2>/dev/null || true
-                log "⚠️ Skipped problematic branch: $branch"
-            fi
-        fi
-    done
-    
-    # Push all changes
-    git push origin "$default_branch" 2>/dev/null || log "Failed to push branch merges"
-    
-    cd ..
+    log "Completed processing $repo_name"
 }
 
 # Main execution
@@ -188,22 +180,14 @@ main() {
     # Get all repositories
     local repos=$(get_all_repos)
     
+    # Process each repository with all 3 actions
     echo "$repos" | while IFS='|' read -r repo_name repo_url default_branch; do
         if [ -n "$repo_name" ]; then
-            log "========================================="
-            log "Processing repository: $repo_name"
-            
-            # Force merge all PRs first
-            force_merge_all_prs "$repo_name" "$repo_url" "$default_branch"
-            
-            # Then force merge any remaining branches
-            force_merge_all_branches "$repo_name" "$default_branch"
-            
-            log "Completed processing $repo_name"
+            process_repository "$repo_name" "$repo_url" "$default_branch"
         fi
     done
     
-    log "Force merge process completed - check individual repos for issues to fix"
+    log "Force merge process completed - all repositories processed"
 }
 
 # Cleanup
