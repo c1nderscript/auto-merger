@@ -9,6 +9,7 @@ GITHUB_USERNAME="${GITHUB_USERNAME:-}"  # Set your GitHub username
 LOG_FILE="/tmp/auto-merge.log"
 REPO_DIR="/tmp/auto-merge-repos"
 MAX_RETRIES=3
+LOCK_FILE="/tmp/auto-merge.lock"
 
 # Colors for output
 RED='\033[0;31m'
@@ -19,6 +20,22 @@ NC='\033[0m' # No Color
 # Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# Acquire script lock
+acquire_lock() {
+    if [ -f "$LOCK_FILE" ]; then
+        local pid
+        pid=$(cat "$LOCK_FILE")
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            log "Another instance is already running with PID $pid. Exiting."
+            exit 1
+        else
+            log "Stale lock file found. Removing."
+            rm -f "$LOCK_FILE"
+        fi
+    fi
+    echo $$ > "$LOCK_FILE"
 }
 
 # Error handling
@@ -224,6 +241,8 @@ process_repository() {
 # Main execution
 main() {
     log "Starting auto-merge process..."
+
+    acquire_lock
     
     check_prerequisites
     
@@ -250,6 +269,7 @@ main() {
 # Cleanup function
 cleanup() {
     log "Cleaning up temporary files..."
+    rm -f "$LOCK_FILE"
     # Optionally remove the temporary repo directory
     # rm -rf "$REPO_DIR"
 }

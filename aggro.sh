@@ -20,9 +20,26 @@ fi
 
 WORKSPACE="/tmp/force-merge"
 LOG_FILE="/var/log/force-merge.log"
+LOCK_FILE="/tmp/force-merge.lock"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"
+}
+
+# Acquire script lock
+acquire_lock() {
+    if [ -f "$LOCK_FILE" ]; then
+        local pid
+        pid=$(cat "$LOCK_FILE")
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            log "Another instance is already running with PID $pid. Exiting."
+            exit 1
+        else
+            log "Stale lock file found. Removing."
+            rm -f "$LOCK_FILE"
+        fi
+    fi
+    echo $$ > "$LOCK_FILE"
 }
 
 # Check if we have a valid token
@@ -172,6 +189,8 @@ process_repository() {
 
 # Main execution
 main() {
+    acquire_lock
+
     # Create workspace
     rm -rf "$WORKSPACE"
     mkdir -p "$WORKSPACE"
@@ -195,6 +214,7 @@ cleanup() {
     log "Cleaning up workspace..."
     cd /
     rm -rf "$WORKSPACE"
+    rm -f "$LOCK_FILE"
 }
 
 trap cleanup EXIT
