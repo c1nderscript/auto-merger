@@ -1,0 +1,13 @@
+/var/log/force-merge.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        # Signal any running merge scripts to reopen log file
+        pkill -HUP -f aggro.sh || true
+        pkill -HUP -f merge.sh || true
+    endscript
+}

@@ -37,7 +37,7 @@ wc -l /var/log/force-merge.log
 
 #### Remediation Actions
 1. **Immediate**: Rotate current log file
-2. **Short-term**: Implement log rotation (logrotate)
+2. **Short-term**: Log rotation now runs via `/etc/logrotate.d/force-merge`
 3. **Long-term**: Set up automated cleanup and archival
 
 ### 2. Disk Space Monitoring
@@ -54,7 +54,9 @@ Create `/etc/logrotate.d/force-merge`:
     missingok
     notifempty
     postrotate
-        # Signal process to reopen log file if needed
+        # Signal running merge scripts to reopen the log file
+        pkill -HUP -f aggro.sh || true
+        pkill -HUP -f merge.sh || true
     endscript
 }
 ```

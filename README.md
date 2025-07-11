@@ -110,7 +110,7 @@ You can modify these variables in the script:
 
 **Recommended actions:**
 - Monitor log file size weekly: `ls -lh /var/log/force-merge.log`
-- Set up log rotation if the file grows large (>100MB)
+- Log rotation is now configured via `/etc/logrotate.d/force-merge` (daily, keep 7)
 - Consider implementing automated log cleanup for files older than 30 days
 - Add disk space monitoring alerts for the `/var/log` directory
 
@@ -127,6 +127,25 @@ df -h /var/log
 
 # Archive old logs (example)
 sudo gzip /var/log/force-merge.log.old
+```
+
+### Log Rotation Setup
+
+Daily rotation for `/var/log/force-merge.log` is configured via `/etc/logrotate.d/force-merge`:
+
+```logrotate
+/var/log/force-merge.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        pkill -HUP -f aggro.sh || true
+        pkill -HUP -f merge.sh || true
+    endscript
+}
 ```
 
 ## Safety Features
