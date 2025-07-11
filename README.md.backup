@@ -27,8 +27,8 @@
 1. **Save the script to a permanent location:**
    ```bash
    sudo mkdir -p /opt/scripts
-   sudo cp auto-merge.sh /opt/scripts/
-   sudo chmod +x /opt/scripts/auto-merge.sh
+   sudo cp merge.sh /opt/scripts/
+   sudo chmod +x /opt/scripts/merge.sh
    ```
 
 2. **Create environment variables file:**
@@ -51,7 +51,7 @@
    ```bash
    #!/bin/bash
    source /opt/scripts/auto-merge.env
-   /opt/scripts/auto-merge.sh
+   /opt/scripts/merge.sh
    ```
    
    Make it executable:
