@@ -13,7 +13,7 @@ if ! authenticate; then
     export GITHUB_TOKEN="${GITHUB_TOKEN_FALLBACK:-}"
     export GITHUB_USERNAME="c1nderscript"
 else
-    source /tmp/github-app-token.env
+    source /opt/scripts/github-app-token.env
     export GITHUB_USERNAME="c1nderscript"
     echo "Using GitHub App authentication with higher rate limits"
 fi
