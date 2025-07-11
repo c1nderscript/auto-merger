@@ -40,11 +40,15 @@ check_prerequisites() {
     if ! command -v gh &> /dev/null; then
         error_exit "GitHub CLI (gh) is not installed. Install it first."
     fi
-    
+
     if ! command -v git &> /dev/null; then
         error_exit "Git is not installed"
     fi
-    
+
+    if ! command -v jq &> /dev/null; then
+        error_exit "jq is not installed"
+    fi
+
     # Authenticate with GitHub CLI
     echo "$GITHUB_TOKEN" | gh auth login --with-token
 }
