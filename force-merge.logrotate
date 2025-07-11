@@ -1,0 +1,13 @@
+/var/log/force-merge.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        # Signal force-merge process to reopen log if running
+        # e.g., systemctl kill -s HUP force-merge.service
+    endscript
+}
+
