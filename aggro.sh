@@ -14,7 +14,7 @@ if [ -z "$GITHUB_TOKEN" ] || [ -z "$GITHUB_USERNAME" ]; then
 fi
 
 WORKSPACE="/tmp/force-merge"
-LOG_FILE="/tmp/force-merge.log"
+LOG_FILE="/var/log/force-merge.log"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"
@@ -27,6 +27,7 @@ error_log() {
 # Initialize
 setup() {
     mkdir -p "$WORKSPACE"
+    mkdir -p "$(dirname "$LOG_FILE")"
     cd "$WORKSPACE"
     echo "$GITHUB_TOKEN" | gh auth login --with-token
     log "Force merge session started"
