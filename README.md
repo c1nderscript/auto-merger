@@ -42,6 +42,9 @@
    export GITHUB_USERNAME="your_github_username"
    ```
 
+   **Note:** All scripts, including `update-automerge.sh`, expect the variable
+   name `GITHUB_TOKEN` exactly as shown. Do not use `GITHUB_TOKEN_VALUE`.
+
 3. **Validate your environment:**
    ```bash
    ./setup-env.sh

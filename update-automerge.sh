@@ -33,6 +33,16 @@ fi
 # Make sure scripts are executable
 chmod +x aggro.sh check-log-size.sh setup-env.sh 2>/dev/null
 
+# Source environment and validate
+if [ -f /opt/scripts/auto-merge.env ]; then
+    # shellcheck source=/dev/null
+    source /opt/scripts/auto-merge.env
+fi
+./setup-env.sh || {
+    log "ERROR: Environment setup failed"
+    exit 1
+}
+
 # Backup current crontab
 crontab -l > /tmp/crontab_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null
 
@@ -40,7 +50,7 @@ crontab -l > /tmp/crontab_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null
 crontab -l 2>/dev/null | grep -v "aggro.sh" > /tmp/new_crontab_temp
 
 # Add the updated automerge cronjob (every minute)
-echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
+echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
 
 # Install the new crontab
 crontab /tmp/new_crontab_temp
