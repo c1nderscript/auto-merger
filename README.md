@@ -40,6 +40,7 @@
    ```bash
    export GITHUB_TOKEN="your_github_personal_access_token_here"
    export GITHUB_USERNAME="your_github_username"
+   export GITHUB_APP_KEY="/root/automerge/github-app-private-key.pem" # optional
    ```
 
 3. **Validate your environment:**

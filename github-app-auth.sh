@@ -7,7 +7,8 @@ set -euo pipefail
 
 # Configuration
 CLIENT_ID="Iv23liEdil5KNk2fcxh3"  # Using Client ID instead of App ID
-PRIVATE_KEY_PATH="/root/automerge/github-app-private-key.pem"
+# Allow override via GITHUB_APP_KEY environment variable
+PRIVATE_KEY_PATH="${GITHUB_APP_KEY:-/root/automerge/github-app-private-key.pem}"
 GITHUB_USERNAME="c1nderscript"
 
 # Colors for output

@@ -62,6 +62,7 @@ auto-merger/
 # Required environment variables (set in /opt/scripts/auto-merge.env)
 export GITHUB_TOKEN="your_github_personal_access_token_here"
 export GITHUB_USERNAME="your_github_username"
+export GITHUB_APP_KEY="/root/automerge/github-app-private-key.pem"  # path to GitHub App private key
 ```
 
 ### Safety Features
