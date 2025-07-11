@@ -5,12 +5,13 @@
 
 # Load GitHub App authentication
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GITHUB_USERNAME="${GITHUB_USERNAME:-c1nderscript}"
 source "$SCRIPT_DIR/github-app-auth.sh"
 
 # Authenticate and get fresh token
 if ! authenticate; then
     echo "Error: GitHub App authentication failed. Falling back to personal access token."
-    export GITHUB_TOKEN="${GITHUB_TOKEN_FALLBACK:-}"
+    export GITHUB_TOKEN="${GITHUB_TOKEN_FALLBACK:-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}"
     export GITHUB_USERNAME="c1nderscript"
 else
     source /tmp/github-app-token.env
@@ -31,7 +32,7 @@ if [ -z "$GITHUB_TOKEN" ]; then
     exit 1
 fi
 
-log "Force merge session started"
+log "Force merge session started - 2x actions per repository"
 
 # Get all repos
 get_all_repos() {
@@ -39,11 +40,27 @@ get_all_repos() {
     jq -r '.[] | "\(.name)|\(.url)|\(.defaultBranchRef.name)"'
 }
 
+# Function to clone or update repository
+clone_or_update_repo() {
+    local repo_name="$1"
+    local repo_url="https://github.com/$GITHUB_USERNAME/$repo_name.git"
+    
+    if [ -d "$repo_name" ]; then
+        cd "$repo_name"
+        git fetch --all --prune
+        cd ..
+    else
+        git clone "$repo_url" "$repo_name" || return 1
+    fi
+}
+
 # Action 1: Attempt to merge an outstanding PR
 merge_outstanding_pr() {
     local repo_name="$1"
     
     log "ACTION 1: Attempting to merge outstanding PR in $repo_name"
+    
+    clone_or_update_repo "$repo_name" || return 1
     
     cd "$repo_name" || return 1
     
@@ -161,9 +178,12 @@ process_repository() {
     gh api repos/"$GITHUB_USERNAME"/"$repo_name"/branches/"$default_branch"/protection \
         --method DELETE 2>/dev/null || true
     
-    # Execute the 3 actions
+    # Execute 2 of each action for higher throughput
+    merge_outstanding_pr "$repo_name"
     merge_outstanding_pr "$repo_name"
     force_conflict_merge "$repo_name"
+    force_conflict_merge "$repo_name"
+    delete_stale_branch "$repo_name"
     delete_stale_branch "$repo_name"
     
     cd ..
@@ -187,7 +207,7 @@ main() {
         fi
     done
     
-    log "Force merge process completed - all repositories processed"
+    log "Force merge process completed - all repositories processed with 2x actions per repo"
 }
 
 # Cleanup
