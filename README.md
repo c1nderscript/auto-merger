@@ -81,6 +81,15 @@
    ```
    */5 * * * * /opt/scripts/auto-merge-wrapper.sh >> /var/log/auto-merge/cron.log 2>&1
    ```
+## Environment Initialization
+
+Before running any merge scripts, load your environment variables and validate the configuration:
+
+```bash
+source /opt/scripts/auto-merge.env
+./setup-env.sh
+```
+
 
 ## GitHub Personal Access Token
 
@@ -142,6 +151,20 @@ df -h /var/log
 # Archive old logs (example)
 sudo gzip /var/log/auto-merge/force-merge.log.old
 ```
+## Routine Operations
+
+Run the log size check regularly using the provided script:
+
+```bash
+./check-log-size.sh
+```
+
+Add this cron entry to check the file every Monday at 09:00:
+
+```bash
+0 9 * * 1 /opt/scripts/check-log-size.sh
+```
+
 
 ### Log Rotation Setup
 
