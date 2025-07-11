@@ -3,7 +3,9 @@
 # Log Size Monitoring Script for Force-Merge
 # Run this script weekly to check log file size
 
-LOG_FILE="/var/log/force-merge.log"
+# Base directory for all log files
+LOG_DIR="${LOG_DIR:-/var/log/auto-merge}"
+LOG_FILE="$LOG_DIR/force-merge.log"
 WARNING_SIZE_MB=50
 CRITICAL_SIZE_MB=100
 

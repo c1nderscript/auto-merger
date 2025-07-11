@@ -31,7 +31,13 @@
    sudo chmod +x /opt/scripts/merge.sh
    ```
 
-2. **Create environment variables file:**
+2. **Create log directory for all scripts:**
+   ```bash
+   sudo mkdir -p /var/log/auto-merge
+   sudo chmod 755 /var/log/auto-merge
+   ```
+
+3. **Create environment variables file:**
    ```bash
    sudo nano /opt/scripts/auto-merge.env
    ```
@@ -42,12 +48,12 @@
    export GITHUB_USERNAME="your_github_username"
    ```
 
-3. **Validate your environment:**
+4. **Validate your environment:**
    ```bash
    ./setup-env.sh
    ```
 
-4. **Create a wrapper script:**
+5. **Create a wrapper script:**
    ```bash
    sudo nano /opt/scripts/auto-merge-wrapper.sh
    ```
@@ -64,14 +70,14 @@
    sudo chmod +x /opt/scripts/auto-merge-wrapper.sh
    ```
 
-5. **Set up the cron job:**
+6. **Set up the cron job:**
    ```bash
    crontab -e
    ```
    
    Add this line to run every 5 minutes:
    ```
-   */5 * * * * /opt/scripts/auto-merge-wrapper.sh >> /var/log/auto-merge-cron.log 2>&1
+   */5 * * * * /opt/scripts/auto-merge-wrapper.sh >> /var/log/auto-merge/cron.log 2>&1
    ```
 
 ## GitHub Personal Access Token
@@ -87,7 +93,7 @@ Generate token at: https://github.com/settings/tokens
 
 - `aggro.sh` &mdash; Force merges all open pull requests and branches. Run only after
   executing `setup-env.sh` when you need to bypass safety checks.
-- `check-log-size.sh` &mdash; Reports the size of `/var/log/force-merge.log` and
+- `check-log-size.sh` &mdash; Reports the size of `/var/log/auto-merge/force-merge.log` and
   warns if the file should be rotated. Useful for weekly maintenance.
 
 ## Configuration Options
@@ -100,16 +106,16 @@ You can modify these variables in the script:
 
 ## Monitoring
 
-- **Check logs:** `tail -f /var/log/auto-merge-cron.log`
-- **Detailed logs:** `tail -f /tmp/auto-merge.log`
+- **Check logs:** `tail -f /var/log/auto-merge/cron.log`
+- **Detailed logs:** `tail -f /var/log/auto-merge/merge.log`
 - **Test manually:** `/opt/scripts/auto-merge-wrapper.sh`
 
 ### ⚠️ Important: Log File Size Monitoring
 
-**CRITICAL**: The force-merge job now runs 10× more frequently. You must periodically review `/var/log/force-merge.log` file size to prevent disk space issues.
+**CRITICAL**: The force-merge job now runs 10× more frequently. You must periodically review `/var/log/auto-merge/force-merge.log` file size to prevent disk space issues.
 
 **Recommended actions:**
-- Monitor log file size weekly: `ls -lh /var/log/force-merge.log`
+- Monitor log file size weekly: `ls -lh /var/log/auto-merge/force-merge.log`
 - Set up log rotation if the file grows large (>100MB)
 - Consider implementing automated log cleanup for files older than 30 days
 - Add disk space monitoring alerts for the `/var/log` directory
@@ -117,7 +123,7 @@ You can modify these variables in the script:
 **Quick commands:**
 ```bash
 # Check current log size
-ls -lh /var/log/force-merge.log
+ls -lh /var/log/auto-merge/force-merge.log
 
 # Check disk usage
 df -h /var/log
@@ -126,7 +132,7 @@ df -h /var/log
 ./check-log-size.sh
 
 # Archive old logs (example)
-sudo gzip /var/log/force-merge.log.old
+sudo gzip /var/log/auto-merge/force-merge.log.old
 ```
 
 ## Safety Features
@@ -158,7 +164,7 @@ source /opt/scripts/auto-merge.env
 ```
 
 ⚠️ **Warning**: `aggro.sh` bypasses all merge protections and can easily break
-repositories. Monitor `/var/log/force-merge.log` and only run it on disposable
+repositories. Monitor `/var/log/auto-merge/force-merge.log` and only run it on disposable
 branches or test environments.
 
 ## Troubleshooting

@@ -19,7 +19,9 @@ else
 fi
 
 WORKSPACE="/tmp/force-merge"
-LOG_FILE="/var/log/force-merge.log"
+# Base directory for all log files
+LOG_DIR="${LOG_DIR:-/var/log/auto-merge}"
+LOG_FILE="$LOG_DIR/force-merge.log"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"

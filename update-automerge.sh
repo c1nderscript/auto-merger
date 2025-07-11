@@ -4,7 +4,9 @@
 # Pulls latest changes from auto-merger repo and resets the cronjob
 
 REPO_DIR="/root/automerge"
-LOG_FILE="/var/log/automerge-update.log"
+# Base directory for all log files
+LOG_DIR="${LOG_DIR:-/var/log/auto-merge}"
+LOG_FILE="$LOG_DIR/automerge-update.log"
 GITHUB_USERNAME="c1nderscript"
 # GitHub App authentication will be handled by aggro.sh
 
@@ -40,7 +42,7 @@ crontab -l > /tmp/crontab_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null
 crontab -l 2>/dev/null | grep -v "aggro.sh" > /tmp/new_crontab_temp
 
 # Add the updated automerge cronjob (every minute)
-echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
+echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> $LOG_DIR/force-merge.log 2>&1" >> /tmp/new_crontab_temp
 
 # Install the new crontab
 crontab /tmp/new_crontab_temp

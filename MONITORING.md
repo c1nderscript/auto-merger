@@ -6,7 +6,7 @@
 
 **Issue**: The force-merge job frequency has been increased by 10× (from previous schedule).
 
-**Critical Path**: `/var/log/force-merge.log`
+**Critical Path**: `/var/log/auto-merge/force-merge.log`
 
 **Action Required**: Implement periodic monitoring of this log file to prevent disk space exhaustion.
 
@@ -18,16 +18,16 @@
 #### Monitoring Commands
 ```bash
 # Check current log file size
-ls -lh /var/log/force-merge.log
+ls -lh /var/log/auto-merge/force-merge.log
 
 # Check disk usage for /var/log partition
 df -h /var/log
 
 # Check log growth rate (run twice with time interval)
-stat /var/log/force-merge.log
+stat /var/log/auto-merge/force-merge.log
 
 # Count log entries (to estimate activity)
-wc -l /var/log/force-merge.log
+wc -l /var/log/auto-merge/force-merge.log
 ```
 
 #### Alert Thresholds
@@ -46,7 +46,7 @@ Monitor `/var/log` partition usage due to increased logging activity.
 ### 3. Log Rotation Setup (Recommended)
 Create `/etc/logrotate.d/force-merge`:
 ```
-/var/log/force-merge.log {
+/var/log/auto-merge/force-merge.log {
     daily
     rotate 7
     compress
@@ -76,7 +76,7 @@ Create `/etc/logrotate.d/force-merge`:
 ## Regular Maintenance Tasks
 
 ### Weekly
-- [ ] Check `/var/log/force-merge.log` size
+- [ ] Check `/var/log/auto-merge/force-merge.log` size
 - [ ] Verify log rotation is working
 - [ ] Check disk space usage
 
