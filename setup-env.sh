@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 # Setup script for environment variables
 # This script sets up the required environment variables for the auto-merge system

@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 # Auto-merge script for all repositories
 # This script scans all repos and merges PRs/branches if no conflicts exist

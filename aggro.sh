@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 # AGGRESSIVE FORCE MERGE SCRIPT
 # For experimental AI-generated code workflows
