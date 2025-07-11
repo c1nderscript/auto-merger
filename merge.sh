@@ -250,8 +250,10 @@ main() {
 # Cleanup function
 cleanup() {
     log "Cleaning up temporary files..."
-    # Optionally remove the temporary repo directory
-    # rm -rf "$REPO_DIR"
+    # Remove the temporary repository directory if it exists
+    if [ -d "$REPO_DIR" ]; then
+        rm -rf "$REPO_DIR"
+    fi
 }
 
 # Set up trap for cleanup
