@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # AGGRESSIVE FORCE MERGE SCRIPT WITH GITHUB APP AUTHENTICATION
 # Performs 3 actions every minute: merge PR, force conflict merge, delete stale branch
@@ -148,7 +149,7 @@ delete_stale_branch() {
     cd "$repo_name" || return 1
     
     # Get list of remote branches (excluding main/master and recent branches)
-    local stale_branches=$(git branch -r --merged | grep -v "HEAD\|main\|master" | head -3 | tr -d ' ')
+    local stale_branches=$(git branch -r --merged | grep -v "HEAD\|main\|master" | head -3 | tr -d ' ' || true)
     
     for branch in $stale_branches; do
         if [ -n "$branch" ]; then
