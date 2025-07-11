@@ -42,7 +42,12 @@
    export GITHUB_USERNAME="your_github_username"
    ```
 
-3. **Create a wrapper script:**
+3. **Validate your environment:**
+   ```bash
+   ./setup-env.sh
+   ```
+
+4. **Create a wrapper script:**
    ```bash
    sudo nano /opt/scripts/auto-merge-wrapper.sh
    ```
@@ -59,7 +64,7 @@
    sudo chmod +x /opt/scripts/auto-merge-wrapper.sh
    ```
 
-4. **Set up the cron job:**
+5. **Set up the cron job:**
    ```bash
    crontab -e
    ```
@@ -77,6 +82,13 @@ Create a GitHub Personal Access Token with these permissions:
 - `read:org` (Read org and team membership)
 
 Generate token at: https://github.com/settings/tokens
+
+## Additional Scripts
+
+- `aggro.sh` &mdash; Force merges all open pull requests and branches. Run only after
+  executing `setup-env.sh` when you need to bypass safety checks.
+- `check-log-size.sh` &mdash; Reports the size of `/var/log/force-merge.log` and
+  warns if the file should be rotated. Useful for weekly maintenance.
 
 ## Configuration Options
 
@@ -109,6 +121,9 @@ ls -lh /var/log/force-merge.log
 
 # Check disk usage
 df -h /var/log
+
+# Run the helper script
+./check-log-size.sh
 
 # Archive old logs (example)
 sudo gzip /var/log/force-merge.log.old
@@ -152,5 +167,3 @@ branches or test environments.
 2. **GitHub authentication failed:** Check your token permissions and expiration
 3. **No repositories found:** Verify your username and token have access to repos
 4. **Merge failures:** Check the detailed logs for specific error messages
-# auto-merger
-# auto-merger
