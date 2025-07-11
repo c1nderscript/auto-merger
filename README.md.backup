@@ -38,9 +38,11 @@
    
    Add your configuration:
    ```bash
-   export GITHUB_TOKEN="your_github_personal_access_token_here"
-   export GITHUB_USERNAME="your_github_username"
-   ```
+  export GITHUB_TOKEN="your_github_personal_access_token_here"
+  export GITHUB_USERNAME="your_github_username"
+  ```
+   Both variables must be exported in `/opt/scripts/auto-merge.env` so that
+   `setup-env.sh`, `aggro.sh`, and related scripts can access them.
 
 3. **Create a wrapper script:**
    ```bash

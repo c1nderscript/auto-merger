@@ -11,11 +11,15 @@ source "$SCRIPT_DIR/github-app-auth.sh"
 if ! authenticate; then
     echo "Error: GitHub App authentication failed. Falling back to personal access token."
     export GITHUB_TOKEN="${GITHUB_TOKEN_FALLBACK:-}"
-    export GITHUB_USERNAME="c1nderscript"
 else
     source /tmp/github-app-token.env
-    export GITHUB_USERNAME="c1nderscript"
     echo "Using GitHub App authentication with higher rate limits"
+fi
+
+# Ensure username is available from the environment
+if [ -z "${GITHUB_USERNAME:-}" ]; then
+    echo "Error: GITHUB_USERNAME is not set."
+    exit 1
 fi
 
 WORKSPACE="/tmp/force-merge"

@@ -2,6 +2,7 @@
 
 # Setup script for environment variables
 # This script sets up the required environment variables for the auto-merge system
+# GITHUB_USERNAME must be exported in /opt/scripts/auto-merge.env
 
 # Check if auto-merge.env exists
 if [ -f "/opt/scripts/auto-merge.env" ]; then

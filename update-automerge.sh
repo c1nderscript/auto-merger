@@ -5,7 +5,8 @@
 
 REPO_DIR="/root/automerge"
 LOG_FILE="/var/log/automerge-update.log"
-GITHUB_USERNAME="c1nderscript"
+# Username should come from the environment (/opt/scripts/auto-merge.env)
+GITHUB_USERNAME="${GITHUB_USERNAME:-}"
 # GitHub App authentication will be handled by aggro.sh
 
 log() {
