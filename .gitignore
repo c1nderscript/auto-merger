@@ -1,0 +1,12 @@
+# Temporary directories used by scripts
+/tmp/auto-merge-repos/
+/tmp/auto-merge.log
+/tmp/force-merge.log
+
+# Log files
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
