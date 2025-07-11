@@ -165,7 +165,22 @@ process_repository() {
     merge_outstanding_pr "$repo_name"
     force_conflict_merge "$repo_name"
     delete_stale_branch "$repo_name"
-    
+
+    # Restore branch protection
+    if gh api "repos/$GITHUB_USERNAME/$repo_name/branches/$default_branch/protection" \
+        --method PUT --input - 2>/dev/null <<'EOF'; then
+{
+  "required_status_checks": null,
+  "enforce_admins": true,
+  "required_pull_request_reviews": null,
+  "restrictions": null
+}
+EOF
+        log "Restored branch protection for $default_branch"
+    else
+        log "⚠️ Failed to restore branch protection for $default_branch"
+    fi
+
     cd ..
     log "Completed processing $repo_name"
 }
