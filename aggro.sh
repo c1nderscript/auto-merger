@@ -25,6 +25,17 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"
 }
 
+# Cleanup routine to ensure workspace is removed even on early exit
+cleanup() {
+    log "Cleaning up workspace..."
+    cd /
+    if [ -d "$WORKSPACE" ]; then
+        rm -rf "$WORKSPACE"
+    fi
+}
+
+trap cleanup EXIT
+
 # Check if we have a valid token
 if [ -z "$GITHUB_TOKEN" ]; then
     log "Error: No GitHub token available. Please check authentication setup."
@@ -189,14 +200,5 @@ main() {
     
     log "Force merge process completed - all repositories processed"
 }
-
-# Cleanup
-cleanup() {
-    log "Cleaning up workspace..."
-    cd /
-    rm -rf "$WORKSPACE"
-}
-
-trap cleanup EXIT
 
 main "$@"
