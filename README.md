@@ -137,5 +137,8 @@ To modify the merge behavior:
 2. **GitHub authentication failed:** Check your token permissions and expiration
 3. **No repositories found:** Verify your username and token have access to repos
 4. **Merge failures:** Check the detailed logs for specific error messages
-# auto-merger
-# auto-merger
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
