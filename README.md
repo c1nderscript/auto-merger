@@ -138,3 +138,4 @@ To modify the merge behavior:
 3. **No repositories found:** Verify your username and token have access to repos
 4. **Merge failures:** Check the detailed logs for specific error messages
 # auto-merger
+# auto-merger
