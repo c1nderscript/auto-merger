@@ -91,5 +91,5 @@ Create `/etc/logrotate.d/force-merge`:
 - [ ] Update monitoring documentation
 
 ---
-**Last Updated**: $(date)
-**Next Review**: $(date -d '+3 months')
+**Last Updated**: 2025-07-11
+**Next Review**: 2025-10-11
