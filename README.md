@@ -89,6 +89,7 @@ Generate token at: https://github.com/settings/tokens
   executing `setup-env.sh` when you need to bypass safety checks.
 - `check-log-size.sh` &mdash; Reports the size of `/var/log/force-merge.log` and
   warns if the file should be rotated. Useful for weekly maintenance.
+- `rotate-log-if-needed.sh` &mdash; Calls `logrotate` when the log exceeds 100MB using the provided configuration.
 
 ## Configuration Options
 
@@ -111,6 +112,7 @@ You can modify these variables in the script:
 **Recommended actions:**
 - Monitor log file size weekly: `ls -lh /var/log/force-merge.log`
 - Set up log rotation if the file grows large (>100MB)
+- Install the sample logrotate config `force-merge.logrotate` to `/etc/logrotate.d/force-merge`
 - Consider implementing automated log cleanup for files older than 30 days
 - Add disk space monitoring alerts for the `/var/log` directory
 
@@ -124,6 +126,9 @@ df -h /var/log
 
 # Run the helper script
 ./check-log-size.sh
+
+# Automatically rotate the log when it grows too large
+./rotate-log-if-needed.sh
 
 # Archive old logs (example)
 sudo gzip /var/log/force-merge.log.old
