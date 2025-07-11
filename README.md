@@ -44,8 +44,9 @@
    
    Add your configuration:
    ```bash
-   export GITHUB_TOKEN="your_github_personal_access_token_here"
-   export GITHUB_USERNAME="your_github_username"
+    export GITHUB_TOKEN="your_github_personal_access_token_here"
+    export GITHUB_USERNAME="your_github_username"
+    export GITHUB_APP_ID="your_github_app_id"
    ```
 
 4. **Validate your environment:**

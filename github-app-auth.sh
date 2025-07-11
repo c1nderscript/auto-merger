@@ -5,7 +5,9 @@ set -euo pipefail
 # Generates JWT, exchanges for installation token
 
 # Configuration
-CLIENT_ID="Iv23liEdil5KNk2fcxh3"  # Using Client ID instead of App ID
+# App ID for generating the JWT. It can be provided via the GITHUB_APP_ID
+# environment variable. Replace the placeholder with your real App ID.
+APP_ID="${GITHUB_APP_ID:-123456}"
 PRIVATE_KEY_PATH="/root/automerge/github-app-private-key.pem"
 GITHUB_USERNAME="c1nderscript"
 
@@ -26,7 +28,7 @@ b64enc() {
 
 # Function to generate JWT using GitHub's recommended approach
 generate_jwt() {
-    local client_id="$1"
+    local app_id="$1"
     local private_key_path="$2"
     
     # Get current time
@@ -48,7 +50,7 @@ generate_jwt() {
     local payload_json="{
         \"iat\":${iat},
         \"exp\":${exp},
-        \"iss\":\"${client_id}\"
+        \"iss\":\"${app_id}\"
     }"
     local payload=$(echo -n "$payload_json" | b64enc)
     
@@ -109,8 +111,8 @@ authenticate() {
     fi
     
     # Generate JWT
-    log "Generating JWT with Client ID: $CLIENT_ID"
-    local jwt=$(generate_jwt "$CLIENT_ID" "$PRIVATE_KEY_PATH")
+    log "Generating JWT with App ID: $APP_ID"
+    local jwt=$(generate_jwt "$APP_ID" "$PRIVATE_KEY_PATH")
     
     if [ -z "$jwt" ]; then
         log "Error: Failed to generate JWT"
