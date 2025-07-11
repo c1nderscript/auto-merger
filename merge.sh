@@ -16,6 +16,16 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Automatically check log size unless explicitly skipped
+if [ -z "$SKIP_LOG_SIZE_CHECK" ]; then
+    ./check-log-size.sh
+    rc=$?
+    if [ "$rc" -eq 2 ]; then
+        echo -e "${RED}Critical log size threshold exceeded. Aborting merge.${NC}"
+        exit 1
+    fi
+fi
+
 # Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"

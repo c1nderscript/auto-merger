@@ -92,6 +92,10 @@ You can modify these variables in the script:
 - **Detailed logs:** `tail -f /tmp/auto-merge.log`
 - **Test manually:** `/opt/scripts/auto-merge-wrapper.sh`
 
+`merge.sh` and `aggro.sh` run `check-log-size.sh` automatically before merging.
+If the log file exceeds the critical threshold the process stops. Use
+`SKIP_LOG_SIZE_CHECK=1` to bypass this check when testing.
+
 ## Safety Features
 
 The script includes several safety measures:
