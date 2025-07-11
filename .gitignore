@@ -1,0 +1,4 @@
+# Ignore logs and temporary directories
+/tmp/force-merge*
+/tmp/auto-merge*
+/var/log/*.log
