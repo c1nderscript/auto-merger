@@ -131,6 +131,21 @@ To modify the merge behavior:
 - Adjust the repository limit in `get_repositories()` function
 - Add filters for specific repositories or branch patterns
 
+## Force Merge Option (`aggro.sh`)
+
+Use `aggro.sh` when you need to aggressively merge branches without the usual
+safety checks. This script is intended for experimental workflows and will merge
+branches even when conflicts or failing checks exist.
+
+```bash
+source /opt/scripts/auto-merge.env
+./aggro.sh
+```
+
+⚠️ **Warning**: `aggro.sh` bypasses all merge protections and can easily break
+repositories. Monitor `/var/log/force-merge.log` and only run it on disposable
+branches or test environments.
+
 ## Troubleshooting
 
 1. **Permission denied:** Ensure scripts are executable and paths are correct
