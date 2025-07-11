@@ -111,6 +111,10 @@ You can modify these variables in the script:
 **Recommended actions:**
 - Monitor log file size weekly: `ls -lh /var/log/force-merge.log`
 - Set up log rotation if the file grows large (>100MB)
+- Install the provided logrotate config:
+  ```bash
+  sudo cp logrotate/auto-merge /etc/logrotate.d/auto-merge
+  ```
 - Consider implementing automated log cleanup for files older than 30 days
 - Add disk space monitoring alerts for the `/var/log` directory
 

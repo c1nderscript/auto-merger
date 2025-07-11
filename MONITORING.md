@@ -44,7 +44,7 @@ wc -l /var/log/force-merge.log
 Monitor `/var/log` partition usage due to increased logging activity.
 
 ### 3. Log Rotation Setup (Recommended)
-Create `/etc/logrotate.d/force-merge`:
+Copy `logrotate/auto-merge` to `/etc/logrotate.d/auto-merge`:
 ```
 /var/log/force-merge.log {
     daily

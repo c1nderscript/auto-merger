@@ -1,0 +1,11 @@
+/var/log/force-merge.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        # Signal process to reopen log file if needed
+    endscript
+}
