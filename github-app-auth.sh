@@ -10,6 +10,8 @@ set -euo pipefail
 APP_ID="${GITHUB_APP_ID:-123456}"
 PRIVATE_KEY_PATH="/root/automerge/github-app-private-key.pem"
 GITHUB_USERNAME="c1nderscript"
+# Location to write the authentication token
+TOKEN_FILE="/opt/scripts/github-app-token.env"
 
 # Colors for output
 RED='\033[0;31m'
@@ -162,12 +164,13 @@ authenticate() {
     export GITHUB_INSTALLATION_ID="$installation_id"
     
     # Save to file for other scripts to use
-    echo "export GITHUB_APP_TOKEN=\"$access_token\"" > /tmp/github-app-token.env
-    echo "export GITHUB_INSTALLATION_ID=\"$installation_id\"" >> /tmp/github-app-token.env
-    echo "export GITHUB_TOKEN=\"$access_token\"" >> /tmp/github-app-token.env  # For compatibility
-    chmod 600 /tmp/github-app-token.env
-    
-    log "Token saved to /tmp/github-app-token.env"
+    mkdir -p "$(dirname "$TOKEN_FILE")"
+    echo "export GITHUB_APP_TOKEN=\"$access_token\"" > "$TOKEN_FILE"
+    echo "export GITHUB_INSTALLATION_ID=\"$installation_id\"" >> "$TOKEN_FILE"
+    echo "export GITHUB_TOKEN=\"$access_token\"" >> "$TOKEN_FILE"  # For compatibility
+    chmod 600 "$TOKEN_FILE"
+
+    log "Token saved to $TOKEN_FILE"
     
     # Test the installation token
     log "Testing installation access token..."
