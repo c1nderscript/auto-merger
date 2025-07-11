@@ -9,6 +9,12 @@ GITHUB_USERNAME="${GITHUB_USERNAME:-}"  # Set your GitHub username
 LOG_FILE="/tmp/auto-merge.log"
 REPO_DIR="/tmp/auto-merge-repos"
 MAX_RETRIES=3
+# Parallel settings
+PARALLEL=false
+PARALLEL_LIMIT=4
+
+# Current repo name for log prefix
+CURRENT_REPO=""
 
 # Colors for output
 RED='\033[0;31m'
@@ -18,13 +24,33 @@ NC='\033[0m' # No Color
 
 # Logging function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    local prefix=""
+    if [ -n "$CURRENT_REPO" ]; then
+        prefix="[$CURRENT_REPO] "
+    fi
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${prefix}$1" | tee -a "$LOG_FILE"
 }
 
 # Error handling
 error_exit() {
     log "ERROR: $1"
     exit 1
+}
+
+# Parse command line arguments
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --parallel)
+                PARALLEL=true
+                if [[ $2 =~ ^[0-9]+$ ]]; then
+                    PARALLEL_LIMIT="$2"
+                    shift
+                fi
+                ;;
+        esac
+        shift
+    done
 }
 
 # Check prerequisites
@@ -207,7 +233,9 @@ merge_branch() {
 process_repository() {
     local repo_info="$1"
     IFS='|' read -r repo_name repo_url default_branch <<< "$repo_info"
-    
+
+    CURRENT_REPO="$repo_name"
+
     log "Processing repository: $repo_name"
     
     if setup_repo "$repo_name" "$repo_url"; then
@@ -219,11 +247,13 @@ process_repository() {
     else
         log "❌ Failed to setup repository $repo_name"
     fi
+    CURRENT_REPO=""
 }
 
 # Main execution
 main() {
-    log "Starting auto-merge process..."
+    parse_args "$@"
+    log "Starting auto-merge process..." 
     
     check_prerequisites
     
@@ -238,11 +268,25 @@ main() {
         exit 0
     fi
     
-    echo "$repos" | while read -r repo_info; do
-        if [ -n "$repo_info" ]; then
+    IFS=$'\n'
+    if [ "$PARALLEL" = true ]; then
+        local pids=()
+        for repo_info in $repos; do
+            [ -z "$repo_info" ] && continue
+            process_repository "$repo_info" &
+            pids+=("$!")
+            if [ "${#pids[@]}" -ge "$PARALLEL_LIMIT" ]; then
+                wait -n
+                pids=( $(jobs -pr) )
+            fi
+        done
+        wait
+    else
+        for repo_info in $repos; do
+            [ -z "$repo_info" ] && continue
             process_repository "$repo_info"
-        fi
-    done
+        done
+    fi
     
     log "Auto-merge process completed"
 }

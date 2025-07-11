@@ -56,7 +56,7 @@
    ```bash
    #!/bin/bash
    source /opt/scripts/auto-merge.env
-   /opt/scripts/merge.sh
+   /opt/scripts/merge.sh --parallel 4
    ```
    
    Make it executable:
@@ -97,6 +97,7 @@ You can modify these variables in the script:
 - `LOG_FILE`: Where to store detailed logs
 - `REPO_DIR`: Temporary directory for cloning repos
 - `MAX_RETRIES`: Number of retry attempts for failed operations
+- `--parallel [N]`: Enable parallel processing with up to `N` concurrent jobs. If `N` is omitted, the default is 4.
 
 ## Monitoring
 
