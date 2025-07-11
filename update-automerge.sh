@@ -12,6 +12,20 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] AUTOMERGE-UPDATE: $1" | tee -a "$LOG_FILE"
 }
 
+# Load token from environment file if available
+if [ -f "/opt/scripts/auto-merge.env" ]; then
+    source /opt/scripts/auto-merge.env
+fi
+
+# Export token so it's available for cron job substitution
+export GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+
+# Validate token is present
+if [ -z "$GITHUB_TOKEN" ]; then
+    log "ERROR: GITHUB_TOKEN is not set. Aborting update."
+    exit 1
+fi
+
 log "Starting automerge update process..."
 
 # Change to repo directory
@@ -40,7 +54,7 @@ crontab -l > /tmp/crontab_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null
 crontab -l 2>/dev/null | grep -v "aggro.sh" > /tmp/new_crontab_temp
 
 # Add the updated automerge cronjob (every minute)
-echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
+echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
 
 # Install the new crontab
 crontab /tmp/new_crontab_temp
