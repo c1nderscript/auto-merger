@@ -1,16 +1,24 @@
 #!/bin/bash
 
-# AGGRESSIVE FORCE MERGE SCRIPT
+# AGGRESSIVE FORCE MERGE SCRIPT WITH GITHUB APP AUTHENTICATION
 # For experimental AI-generated code workflows
 # Merges everything regardless of conflicts or test failures
 
-# Check if environment variables are set
-if [ -z "$GITHUB_TOKEN" ] || [ -z "$GITHUB_USERNAME" ]; then
-    echo "Error: GITHUB_TOKEN and GITHUB_USERNAME must be set as environment variables."
-    echo "Please set them before running this script:"
-    echo "  export GITHUB_TOKEN=your_token_here"
-    echo "  export GITHUB_USERNAME=your_username_here"
-    exit 1
+# Load GitHub App authentication
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/github-app-auth.sh"
+
+# Authenticate and get fresh token
+if ! authenticate; then
+    echo "Error: GitHub App authentication failed. Falling back to personal access token."
+    # Fallback to personal access token
+    export GITHUB_TOKEN="${GITHUB_TOKEN_FALLBACK:-}"
+    export GITHUB_USERNAME="c1nderscript"
+else
+    # Load the GitHub App token
+    source /tmp/github-app-token.env
+    export GITHUB_USERNAME="c1nderscript"
+    echo "Using GitHub App authentication with higher rate limits"
 fi
 
 WORKSPACE="/tmp/force-merge"
@@ -20,17 +28,14 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"
 }
 
-error_log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1" | tee -a "$LOG_FILE"
-}
+# Check if we have a valid token
+if [ -z "$GITHUB_TOKEN" ]; then
+    log "Error: No GitHub token available. Please check authentication setup."
+    exit 1
+fi
 
-# Initialize
-setup() {
-    mkdir -p "$WORKSPACE"
-    cd "$WORKSPACE"
-    echo "$GITHUB_TOKEN" | gh auth login --with-token
-    log "Force merge session started"
-}
+log "Force merge session started"
+log "Starting aggressive force merge process..."
 
 # Get all repos
 get_all_repos() {
@@ -64,21 +69,21 @@ force_merge_all_prs() {
     
     if [ -z "$prs" ]; then
         log "No PRs found in $repo_name"
-        cd ..
-        return
-    fi
+    else
+        log "Processing PRs in $repo_name"
     
-    echo "$prs" | while IFS='|' read -r pr_number head_branch base_branch; do
-        log "Force merging PR #$pr_number: $head_branch -> $base_branch"
-        
-        # Try normal merge first
-        if gh pr merge "$pr_number" --squash --auto 2>/dev/null; then
-            log "✅ Normal merge successful for PR #$pr_number"
-        else
-            # Force merge approach
-            force_merge_pr "$repo_name" "$pr_number" "$head_branch" "$base_branch"
-        fi
-    done
+        echo "$prs" | while IFS='|' read -r pr_number head_branch base_branch; do
+            log "Force merging PR #$pr_number: $head_branch -> $base_branch"
+            
+            # Try normal merge first
+            if gh pr merge "$pr_number" --squash --auto 2>/dev/null; then
+                log "✅ Normal merge successful for PR #$pr_number"
+            else
+                # Force merge approach
+                force_merge_pr "$repo_name" "$pr_number" "$head_branch" "$base_branch"
+            fi
+        done
+    fi
     
     cd ..
 }
@@ -105,45 +110,34 @@ force_merge_pr() {
     elif git merge "$head_branch" --no-ff --strategy=ours; then
         log "Merge successful with 'ours' strategy"  
     else
-        log "Standard merge failed, forcing manual resolution..."
+        # Force merge by creating a merge commit manually
+        git merge --abort 2>/dev/null || true
+        git reset --hard "origin/$base_branch"
         
-        # Get conflicted files
-        local conflicted_files=$(git diff --name-only --diff-filter=U)
+        # Get the commits from head branch
+        local head_commit=$(git rev-parse "$head_branch")
+        git merge --no-ff --strategy=ours "$head_branch" -m "Force merge PR #$pr_number: $head_branch -> $base_branch"
         
-        if [ -n "$conflicted_files" ]; then
-            log "Resolving conflicts in: $conflicted_files"
-            
-            # Auto-resolve conflicts by accepting incoming changes
-            echo "$conflicted_files" | while read -r file; do
-                if [ -f "$file" ]; then
-                    # Remove conflict markers, keep both versions
-                    sed -i '/^<<<<<<< HEAD$/d; /^=======$/d; /^>>>>>>> /d' "$file"
-                    git add "$file"
-                fi
-            done
-            
-            # Commit the resolution
-            git commit -m "Force merge PR #$pr_number - auto-resolved conflicts" 2>/dev/null || true
+        if [ $? -eq 0 ]; then
+            log "Force merge successful with 'ours' strategy"
+        else
+            log "❌ Force merge failed for PR #$pr_number"
+            return 1
         fi
     fi
     
-    # Force push the result
-    if git push origin "$base_branch" --force-with-lease; then
-        log "✅ Force pushed merged changes for PR #$pr_number"
+    # Push the merge
+    if git push origin "$base_branch" 2>/dev/null; then
+        log "✅ Successfully pushed merged changes for PR #$pr_number"
         
         # Close the PR
         gh pr close "$pr_number" --comment "Auto-merged via force merge script" 2>/dev/null || true
-        
-        # Delete the source branch
-        git push origin --delete "$head_branch" 2>/dev/null || true
-        git branch -D "$head_branch" 2>/dev/null || true
-        
     else
-        error_log "Failed to push merged changes for PR #$pr_number"
+        log "ERROR: Failed to push merged changes for PR #$pr_number"
     fi
 }
 
-# Force merge all branches into default branch
+# Force merge all branches in a repo
 force_merge_all_branches() {
     local repo_name="$1"
     local default_branch="$2"
@@ -151,55 +145,47 @@ force_merge_all_branches() {
     log "Force merging all branches in $repo_name"
     
     cd "$repo_name"
-    git checkout "$default_branch"
+    
+    # Switch to default branch
+    git checkout "$default_branch" 2>/dev/null || git checkout -b "$default_branch" "origin/$default_branch"
     git reset --hard "origin/$default_branch"
     
     # Get all remote branches except default
-    local branches=$(git branch -r | grep -v "origin/$default_branch" | grep -v "origin/HEAD" | sed 's/origin\///' | xargs)
+    local branches=$(git branch -r | grep -v "origin/$default_branch" | grep -v "HEAD" | sed 's/origin\///' | tr -d ' ')
     
     for branch in $branches; do
-        if [ -n "$branch" ]; then
+        if [ -n "$branch" ] && [ "$branch" != "$default_branch" ]; then
             log "Force merging branch: $branch"
             
-            # Skip if it has an open PR (we'll handle those separately)
-            local has_pr=$(gh pr list --head "$branch" --json number --jq 'length')
-            if [ "$has_pr" -gt 0 ]; then
-                continue
-            fi
+            # Fetch the branch
+            git fetch origin "$branch:$branch" 2>/dev/null || continue
             
-            # Force merge the branch
-            if git merge "origin/$branch" --no-ff --strategy=recursive -X theirs; then
+            # Try to merge
+            if git merge "$branch" --no-ff --strategy=recursive -X theirs 2>/dev/null; then
                 log "✅ Merged branch $branch"
+            elif git merge "$branch" --no-ff --strategy=ours 2>/dev/null; then
+                log "✅ Merged branch $branch with 'ours' strategy"
             else
-                # Resolve conflicts automatically
-                git diff --name-only --diff-filter=U | while read -r file; do
-                    if [ -f "$file" ]; then
-                        sed -i '/^<<<<<<< HEAD$/d; /^=======$/d; /^>>>>>>> /d' "$file"
-                        git add "$file"
-                    fi
-                done
-                
-                git commit -m "Force merge branch $branch - auto-resolved" 2>/dev/null || true
-                log "✅ Force merged branch $branch with conflict resolution"
+                git merge --abort 2>/dev/null || true
+                log "⚠️ Skipped problematic branch: $branch"
             fi
-            
-            # Delete the merged branch
-            git push origin --delete "$branch" 2>/dev/null || true
         fi
     done
     
     # Push all changes
-    git push origin "$default_branch" --force-with-lease
+    git push origin "$default_branch" 2>/dev/null || log "Failed to push branch merges"
     
     cd ..
 }
 
 # Main execution
 main() {
-    setup
+    # Create workspace
+    rm -rf "$WORKSPACE"
+    mkdir -p "$WORKSPACE"
+    cd "$WORKSPACE"
     
-    log "Starting aggressive force merge process..."
-    
+    # Get all repositories
     local repos=$(get_all_repos)
     
     echo "$repos" | while IFS='|' read -r repo_name repo_url default_branch; do
