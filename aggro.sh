@@ -13,6 +13,11 @@ if [ -z "$GITHUB_TOKEN" ] || [ -z "$GITHUB_USERNAME" ]; then
     exit 1
 fi
 
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is not installed. Please install it first."
+    exit 1
+fi
+
 WORKSPACE="/tmp/force-merge"
 LOG_FILE="/tmp/force-merge.log"
 
