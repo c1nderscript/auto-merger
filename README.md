@@ -159,6 +159,11 @@ Test the configuration manually:
 sudo logrotate --force /etc/logrotate.d/force-merge
 ```
 
+`merge.sh` and `aggro.sh` automatically invoke `check-log-size.sh` at startup.
+If the log file exceeds the critical threshold, the script exits without
+performing merges. Set `SKIP_LOG_SIZE_CHECK=1` to bypass this check when
+testing.
+
 ## Safety Features
 
 The script includes several safety measures:

@@ -25,6 +25,16 @@ WORKSPACE="/tmp/force-merge"
 LOG_DIR="${LOG_DIR:-/var/log/auto-merge}"
 LOG_FILE="$LOG_DIR/force-merge.log"
 
+# Run log size check unless explicitly disabled
+if [ -z "$SKIP_LOG_SIZE_CHECK" ]; then
+    "$SCRIPT_DIR/check-log-size.sh"
+    rc=$?
+    if [ "$rc" -eq 2 ]; then
+        echo "CRITICAL: Log size exceeded threshold. Exiting." | tee -a "$LOG_FILE"
+        exit 1
+    fi
+fi
+
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"
 }
