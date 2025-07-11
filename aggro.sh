@@ -20,11 +20,24 @@ else
 fi
 
 WORKSPACE="/tmp/force-merge"
-LOG_FILE="/var/log/force-merge.log"
+# Base directory for all log files
+LOG_DIR="${LOG_DIR:-/var/log/auto-merge}"
+LOG_FILE="$LOG_DIR/force-merge.log"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"
 }
+
+# Cleanup routine to ensure workspace is removed even on early exit
+cleanup() {
+    log "Cleaning up workspace..."
+    cd /
+    if [ -d "$WORKSPACE" ]; then
+        rm -rf "$WORKSPACE"
+    fi
+}
+
+trap cleanup EXIT
 
 # Check if we have a valid token
 if [ -z "$GITHUB_TOKEN" ]; then
@@ -209,14 +222,5 @@ main() {
     
     log "Force merge process completed - all repositories processed with 2x actions per repo"
 }
-
-# Cleanup
-cleanup() {
-    log "Cleaning up workspace..."
-    cd /
-    rm -rf "$WORKSPACE"
-}
-
-trap cleanup EXIT
 
 main "$@"

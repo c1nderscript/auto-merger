@@ -6,7 +6,10 @@
 # Configuration
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"  # Set your GitHub token as environment variable
 GITHUB_USERNAME="${GITHUB_USERNAME:-}"  # Set your GitHub username
-LOG_FILE="/tmp/auto-merge.log"
+# Base directory for all log files
+LOG_DIR="${LOG_DIR:-/var/log/auto-merge}"
+# Individual log file for this script
+LOG_FILE="$LOG_DIR/merge.log"
 REPO_DIR="/tmp/auto-merge-repos"
 MAX_RETRIES=3
 
@@ -250,8 +253,10 @@ main() {
 # Cleanup function
 cleanup() {
     log "Cleaning up temporary files..."
-    # Optionally remove the temporary repo directory
-    # rm -rf "$REPO_DIR"
+    # Remove the temporary repository directory if it exists
+    if [ -d "$REPO_DIR" ]; then
+        rm -rf "$REPO_DIR"
+    fi
 }
 
 # Set up trap for cleanup
