@@ -22,7 +22,7 @@ else
 fi
 
 WORKSPACE="/tmp/force-merge"
-LOG_FILE="/tmp/force-merge.log"
+LOG_FILE="/var/log/force-merge.log"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FORCE-MERGE: $1" | tee -a "$LOG_FILE"
