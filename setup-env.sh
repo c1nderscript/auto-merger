@@ -28,7 +28,7 @@ echo "  GITHUB_USERNAME: $GITHUB_USERNAME"
 echo "  GITHUB_TOKEN: [REDACTED]"
 
 # Run the command passed as arguments
-if [ "$#" -gt 0 ]; then
+if [ $# -gt 0 ]; then
     echo "Executing: $*"
     exec "$@"
 fi

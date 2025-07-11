@@ -41,7 +41,7 @@ crontab -l > /tmp/crontab_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
 crontab -l 2>/dev/null | grep -v "aggro.sh" > /tmp/new_crontab_temp || true
 
 # Add the updated automerge cronjob (every minute)
-echo "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> $LOG_DIR/force-merge.log 2>&1" >> /tmp/new_crontab_temp
+printf '%s\n' "* * * * * cd $REPO_DIR && GITHUB_TOKEN=\"$GITHUB_TOKEN_VALUE\" GITHUB_USERNAME=\"$GITHUB_USERNAME\" ./aggro.sh >> /var/log/force-merge.log 2>&1" >> /tmp/new_crontab_temp
 
 # Install the new crontab
 if crontab /tmp/new_crontab_temp; then
