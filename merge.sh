@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Auto-merge script for all repositories
 # This script scans all repos and merges PRs/branches if no conflicts exist
@@ -136,7 +137,7 @@ check_branches() {
     log "Checking branches for direct merge in $repo_name..."
     
     # Get all remote branches except the default branch
-    local branches=$(git branch -r | grep -v "origin/$default_branch" | grep -v "origin/HEAD" | sed 's/origin\///' | xargs)
+    local branches=$(git branch -r | grep -v "origin/$default_branch" | grep -v "origin/HEAD" | sed 's/origin\///' | xargs || true)
     
     if [ -z "$branches" ]; then
         log "No additional branches found for $repo_name"

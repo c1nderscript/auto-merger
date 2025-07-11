@@ -1,9 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 
 # GitHub App Authentication Script
 # Generates JWT, exchanges for installation token
-
-set -euo pipefail
 
 # Configuration
 CLIENT_ID="Iv23liEdil5KNk2fcxh3"  # Using Client ID instead of App ID

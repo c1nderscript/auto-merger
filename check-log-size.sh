@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Log Size Monitoring Script for Force-Merge
 # Run this script weekly to check log file size
